@@ -2,7 +2,10 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 from datetime import datetime, timezone
 import json
+import logging
 import os
+
+logger = logging.getLogger("ewa.firebase")
 
 # Lazy Firebase initialization
 _db = None
@@ -18,19 +21,24 @@ def _get_db():
             # Option 1: JSON string in env var (for Railway/cloud deploys)
             sa_json = os.getenv("FIREBASE_SERVICE_ACCOUNT_JSON")
             if sa_json:
+                logger.info("Found FIREBASE_SERVICE_ACCOUNT_JSON env var (%d chars)", len(sa_json))
                 sa_dict = json.loads(sa_json)
                 cred = credentials.Certificate(sa_dict)
                 firebase_admin.initialize_app(cred, {"projectId": sa_dict.get("project_id", "early-warning-analyst")})
+                logger.info("Firebase initialized with service account JSON")
             else:
                 # Option 2: File path (for local dev)
                 sa_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
                 if sa_path:
                     cred = credentials.Certificate(sa_path)
                     firebase_admin.initialize_app(cred, {"projectId": "early-warning-analyst"})
+                    logger.info("Firebase initialized with credentials file")
                 else:
+                    logger.warning("No Firebase credentials found, falling back to Application Default")
                     cred = credentials.ApplicationDefault()
                     firebase_admin.initialize_app(cred, {"projectId": "early-warning-analyst"})
-        except Exception:
+        except Exception as e:
+            logger.error("Firebase init failed: %s", e)
             firebase_admin.initialize_app(options={"projectId": "early-warning-analyst"})
 
     _db = firestore.client()
