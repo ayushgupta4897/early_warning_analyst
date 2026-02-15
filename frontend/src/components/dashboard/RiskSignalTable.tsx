@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, Fragment } from "react";
 import { Signal, RISK_BAND_COLORS, RISK_BAND_LABELS } from "@/lib/types";
 
 type SortKey = "overall" | "impact" | "lead_time" | "reliability" | "near_term" | "structural";
@@ -49,9 +49,8 @@ export default function RiskSignalTable({ signals }: { signals: Signal[] }) {
         </thead>
         <tbody>
           {sorted.map((signal, i) => (
-            <>
+            <Fragment key={signal.signal_id || i}>
               <tr
-                key={signal.signal_id}
                 className="border-b border-card-border/50 hover:bg-card-hover cursor-pointer transition-colors"
                 onClick={() =>
                   setExpandedId(expandedId === signal.signal_id ? null : signal.signal_id)
@@ -158,7 +157,7 @@ export default function RiskSignalTable({ signals }: { signals: Signal[] }) {
                   </td>
                 </tr>
               )}
-            </>
+            </Fragment>
           ))}
         </tbody>
       </table>

@@ -72,11 +72,38 @@ export function useAnalysisStream(analysisId: string | null) {
             }
             break;
 
-          case "analysis_complete":
+          case "analysis_complete": {
             setStatus("complete");
             setFullData(data.data || null);
+
+            // Extract signals/constellations/assessment from final data
+            // (needed when loading cached analysis from Firebase)
+            const finalData = data.data as Record<string, unknown> | undefined;
+            if (finalData) {
+              const agentsData = finalData.agents as Record<string, unknown> | undefined;
+              if (agentsData) {
+                const synth = agentsData.synthesis as SynthesisData | undefined;
+                if (synth) {
+                  if (synth.scored_signals) setSignals(synth.scored_signals);
+                  if (synth.constellations) setConstellations(synth.constellations);
+                  if (synth.overall_assessment) setAssessment(synth.overall_assessment);
+                }
+                // Mark all agents as concluded with their data
+                setAgents((prev) =>
+                  prev.map((a) => {
+                    const agentResult = agentsData[a.id] as Record<string, unknown> | undefined;
+                    if (agentResult) {
+                      return { ...a, status: "concluded" as const, data: agentResult };
+                    }
+                    return a;
+                  })
+                );
+              }
+            }
+
             es.close();
             break;
+          }
 
           case "error":
             setError(data.message || "Unknown error");

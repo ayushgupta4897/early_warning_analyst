@@ -82,6 +82,18 @@ def get_analysis(analysis_id: str):
     return None
 
 
+def list_analyses():
+    """List all analyses from Firestore (most recent first)."""
+    db = _get_db()
+    docs = db.collection("analyses").order_by("created_at", direction=firestore.Query.DESCENDING).limit(50).stream()
+    results = []
+    for doc in docs:
+        data = doc.to_dict()
+        data["id"] = doc.id
+        results.append(data)
+    return results
+
+
 def save_what_if(analysis_id: str, scenario_id: str, result: dict):
     db = _get_db()
     doc_ref = (

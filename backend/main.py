@@ -26,6 +26,7 @@ from backend.services.firebase_service import (
     save_final_analysis,
     get_analysis,
     save_what_if,
+    list_analyses,
 )
 
 app = FastAPI(title="Early Warning Analyst API", version="1.0.0")
@@ -176,8 +177,36 @@ async def stream_analysis(analysis_id: str):
 
 @app.get("/api/runs")
 async def list_runs():
-    """List all analysis runs (most recent first)."""
-    runs = sorted(analysis_history.values(), key=lambda r: r["created_at"], reverse=True)
+    """List all analysis runs (most recent first), merging in-memory + Firebase."""
+    merged = dict(analysis_history)  # start with in-memory
+
+    # Load from Firebase for persisted runs not in memory
+    try:
+        fb_runs = list_analyses()
+        for run in fb_runs:
+            rid = run.get("id", "")
+            if rid and rid not in merged:
+                config = run.get("config", {})
+                final_data = run.get("final_data", {})
+                synth = (final_data.get("agents", {}) or {}).get("synthesis", {}) if final_data else {}
+                assessment = synth.get("overall_assessment") if synth else None
+                created = run.get("created_at")
+                ts = created.timestamp() if hasattr(created, "timestamp") else time.time()
+                merged[rid] = {
+                    "id": rid,
+                    "country": config.get("country", "Unknown"),
+                    "scope": config.get("scope", "national"),
+                    "horizon": config.get("horizon", 5),
+                    "domains": config.get("domains", []),
+                    "signal_count": config.get("signal_count", 0),
+                    "status": run.get("status", "unknown"),
+                    "created_at": ts,
+                    "assessment": assessment,
+                }
+    except Exception as e:
+        logger.warning("[API] Failed to load runs from Firebase: %s", e)
+
+    runs = sorted(merged.values(), key=lambda r: r["created_at"], reverse=True)
     return {"runs": runs}
 
 
