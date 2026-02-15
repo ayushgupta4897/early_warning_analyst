@@ -102,3 +102,109 @@ body {
 .backdrop-enter {
   animation: fade-in 0.15s ease-out;
 }
+
+/* Scroll reveal animations */
+@keyframes reveal-up {
+  from { opacity: 0; transform: translateY(40px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes reveal-left {
+  from { opacity: 0; transform: translateX(-40px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes reveal-right {
+  from { opacity: 0; transform: translateX(40px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes reveal-scale {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes draw-line {
+  from { height: 0; }
+  to { height: 100%; }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 8px var(--glow, #7c3aed), 0 0 24px color-mix(in srgb, var(--glow, #7c3aed) 20%, transparent); }
+  50% { box-shadow: 0 0 16px var(--glow, #7c3aed), 0 0 48px color-mix(in srgb, var(--glow, #7c3aed) 35%, transparent); }
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(40px);
+}
+
+.reveal.visible {
+  animation: reveal-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.reveal-left {
+  opacity: 0;
+  transform: translateX(-40px);
+}
+
+.reveal-left.visible {
+  animation: reveal-left 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.reveal-right {
+  opacity: 0;
+  transform: translateX(40px);
+}
+
+.reveal-right.visible {
+  animation: reveal-right 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.reveal-scale {
+  opacity: 0;
+  transform: scale(0.9);
+}
+
+.reveal-scale.visible {
+  animation: reveal-scale 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Stagger children */
+.stagger-children.visible > * { opacity: 0; animation: reveal-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.stagger-children.visible > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-children.visible > *:nth-child(2) { animation-delay: 80ms; }
+.stagger-children.visible > *:nth-child(3) { animation-delay: 160ms; }
+.stagger-children.visible > *:nth-child(4) { animation-delay: 240ms; }
+.stagger-children.visible > *:nth-child(5) { animation-delay: 320ms; }
+.stagger-children.visible > *:nth-child(6) { animation-delay: 400ms; }
+.stagger-children.visible > *:nth-child(7) { animation-delay: 480ms; }
+.stagger-children.visible > *:nth-child(8) { animation-delay: 560ms; }
+
+/* Agent card glow on hover */
+.agent-card-glow {
+  transition: box-shadow 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
+}
+
+.agent-card-glow:hover {
+  transform: translateY(-2px);
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Timeline connector */
+.timeline-line {
+  animation: draw-line 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Section glow accents */
+.section-glow-purple {
+  background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(124, 58, 237, 0.06) 0%, transparent 70%);
+}
+
+.section-glow-red {
+  background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(239, 68, 68, 0.04) 0%, transparent 70%);
+}
+
+.section-glow-blue {
+  background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(59, 130, 246, 0.04) 0%, transparent 70%);
+}

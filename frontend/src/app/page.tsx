@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { startAnalysis, listRuns, AnalysisRun } from "@/lib/api";
 import { AnalysisConfig, DOMAIN_OPTIONS, RISK_BAND_COLORS } from "@/lib/types";
 import { COUNTRIES, Country } from "@/lib/countries";
@@ -122,25 +123,20 @@ export default function Home() {
         <div className="text-xs font-mono tracking-widest text-muted uppercase">
           EWA
         </div>
-        <button
-          onClick={() => setSidebarOpen(true)}
-          className="flex items-center gap-2 text-xs text-muted hover:text-foreground transition-colors cursor-pointer"
-        >
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+        <nav className="flex items-center gap-5">
+          <Link
+            href="/how-it-works"
+            className="text-xs text-muted hover:text-foreground transition-colors"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.5}
-              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
-            />
-          </svg>
-          History
-        </button>
+            How it Works
+          </Link>
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="text-xs text-muted hover:text-foreground transition-colors cursor-pointer"
+          >
+            Historical Runs
+          </button>
+        </nav>
       </header>
 
       {/* Main Content */}
