@@ -1,13 +1,13 @@
 @import "tailwindcss";
 
 @theme inline {
-  --color-background: #0a0a0f;
+  --color-background: #080810;
   --color-foreground: #e2e8f0;
-  --color-card: #12121a;
-  --color-card-border: #1e1e2e;
-  --color-card-hover: #1a1a28;
+  --color-card: #0f0f1a;
+  --color-card-border: #1a1a2e;
+  --color-card-hover: #16162a;
   --color-muted: #94a3b8;
-  --color-accent: #3b82f6;
+  --color-accent: #7c3aed;
 
   /* Agent colors */
   --color-agent-hunter: #3b82f6;
@@ -51,8 +51,8 @@ body {
 
 /* Glow animation for active agents */
 @keyframes agent-glow {
-  0%, 100% { box-shadow: 0 0 5px var(--glow-color, #3b82f6); }
-  50% { box-shadow: 0 0 20px var(--glow-color, #3b82f6), 0 0 40px color-mix(in srgb, var(--glow-color, #3b82f6) 30%, transparent); }
+  0%, 100% { box-shadow: 0 0 5px var(--glow-color, #7c3aed); }
+  50% { box-shadow: 0 0 20px var(--glow-color, #7c3aed), 0 0 40px color-mix(in srgb, var(--glow-color, #7c3aed) 30%, transparent); }
 }
 
 .agent-active {
@@ -77,4 +77,9 @@ body {
 
 .risk-pulse {
   animation: pulse-risk 2s ease-in-out infinite;
+}
+
+/* Hero background glow */
+.hero-glow {
+  background: radial-gradient(ellipse 60% 50% at 50% 40%, rgba(124, 58, 237, 0.08) 0%, transparent 70%);
 }
