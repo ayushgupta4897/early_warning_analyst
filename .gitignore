@@ -25,3 +25,4 @@ Thumbs.db
 
 # Firebase
 firebase-service-account.json
+**/firebase-sa.json

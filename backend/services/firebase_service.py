@@ -1,6 +1,7 @@
 import firebase_admin
 from firebase_admin import credentials, firestore
 from datetime import datetime, timezone
+import json
 import os
 
 # Lazy Firebase initialization
@@ -14,14 +15,21 @@ def _get_db():
 
     if not firebase_admin._apps:
         try:
-            # Try service account file first
-            sa_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
-            if sa_path:
-                cred = credentials.Certificate(sa_path)
-                firebase_admin.initialize_app(cred, {"projectId": "early-warning-analyst"})
+            # Option 1: JSON string in env var (for Railway/cloud deploys)
+            sa_json = os.getenv("FIREBASE_SERVICE_ACCOUNT_JSON")
+            if sa_json:
+                sa_dict = json.loads(sa_json)
+                cred = credentials.Certificate(sa_dict)
+                firebase_admin.initialize_app(cred, {"projectId": sa_dict.get("project_id", "early-warning-analyst")})
             else:
-                cred = credentials.ApplicationDefault()
-                firebase_admin.initialize_app(cred, {"projectId": "early-warning-analyst"})
+                # Option 2: File path (for local dev)
+                sa_path = os.getenv("GOOGLE_APPLICATION_CREDENTIALS")
+                if sa_path:
+                    cred = credentials.Certificate(sa_path)
+                    firebase_admin.initialize_app(cred, {"projectId": "early-warning-analyst"})
+                else:
+                    cred = credentials.ApplicationDefault()
+                    firebase_admin.initialize_app(cred, {"projectId": "early-warning-analyst"})
         except Exception:
             firebase_admin.initialize_app(options={"projectId": "early-warning-analyst"})
 
