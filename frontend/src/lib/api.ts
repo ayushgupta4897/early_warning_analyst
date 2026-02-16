@@ -54,3 +54,15 @@ export async function listRuns(): Promise<{ runs: AnalysisRun[] }> {
   if (!res.ok) throw new Error(`Failed to list runs: ${res.statusText}`);
   return res.json();
 }
+
+export async function deleteAnalysis(analysisId: string, password: string): Promise<void> {
+  const res = await fetch(`${API_URL}/api/analyze/${analysisId}`, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ password }),
+  });
+  if (!res.ok) {
+    const msg = res.status === 403 ? "Invalid password" : `Failed to delete: ${res.statusText}`;
+    throw new Error(msg);
+  }
+}

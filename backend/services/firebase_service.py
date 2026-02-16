@@ -110,6 +110,15 @@ def list_analyses():
     return results
 
 
+def delete_analysis(analysis_id: str):
+    db = _get_db()
+    doc_ref = db.collection("analyses").document(analysis_id)
+    # Delete subcollections (what_if_scenarios)
+    for sub_doc in doc_ref.collection("what_if_scenarios").stream():
+        sub_doc.reference.delete()
+    doc_ref.delete()
+
+
 def save_what_if(analysis_id: str, scenario_id: str, result: dict):
     db = _get_db()
     doc_ref = (

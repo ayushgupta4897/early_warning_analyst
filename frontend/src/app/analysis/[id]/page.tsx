@@ -1,6 +1,8 @@
 "use client";
-import { use, useState } from "react";
+import { use, useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { useAnalysisStream } from "@/hooks/useAnalysisStream";
+import { deleteAnalysis } from "@/lib/api";
 import AgentDebatePanel from "@/components/agents/AgentDebatePanel";
 import RiskSignalTable from "@/components/dashboard/RiskSignalTable";
 import ConstellationGraph from "@/components/dashboard/ConstellationGraph";
@@ -14,8 +16,35 @@ type Tab = "constellation" | "signals" | "fingerprints" | "whatif";
 export default function AnalysisPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const { agents, signals, constellations, assessment, status, error } = useAnalysisStream(id);
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<Tab>("signals");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteError, setDeleteError] = useState("");
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = useCallback(async () => {
+    setDeleting(true);
+    setDeleteError("");
+    try {
+      await deleteAnalysis(id, deletePassword);
+      router.push("/");
+    } catch (e: unknown) {
+      setDeleteError(e instanceof Error ? e.message : "Failed to delete");
+    } finally {
+      setDeleting(false);
+    }
+  }, [id, deletePassword, router]);
+
+  useEffect(() => {
+    if (!showDeleteModal) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setShowDeleteModal(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [showDeleteModal]);
 
   const tabs: { key: Tab; label: string }[] = [
     { key: "constellation", label: "Constellation Map" },
@@ -62,6 +91,18 @@ export default function AnalysisPage({ params }: { params: Promise<{ id: string 
           {status === "error" && (
             <span className="text-xs text-risk-red-action">{error}</span>
           )}
+          <button
+            onClick={() => { setShowDeleteModal(true); setDeletePassword(""); setDeleteError(""); }}
+            className="text-muted hover:text-risk-red-action transition-colors"
+            title="Delete analysis"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="3 6 5 6 21 6" />
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+              <line x1="10" y1="11" x2="10" y2="17" />
+              <line x1="14" y1="11" x2="14" y2="17" />
+            </svg>
+          </button>
         </div>
 
         {/* Overall Assessment Badge */}
@@ -122,6 +163,46 @@ export default function AnalysisPage({ params }: { params: Promise<{ id: string 
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowDeleteModal(false)} />
+          <div className="relative bg-card border border-card-border rounded-lg p-6 w-full max-w-sm shadow-xl">
+            <h3 className="text-foreground font-semibold text-lg mb-2">Delete Analysis</h3>
+            <p className="text-muted text-sm mb-4">
+              This will permanently delete this analysis and all associated data. Enter the password to confirm.
+            </p>
+            <input
+              type="password"
+              placeholder="Password"
+              value={deletePassword}
+              onChange={(e) => { setDeletePassword(e.target.value); setDeleteError(""); }}
+              onKeyDown={(e) => { if (e.key === "Enter" && deletePassword) handleDelete(); }}
+              className="w-full px-3 py-2 rounded-md bg-background border border-card-border text-foreground text-sm focus:outline-none focus:border-accent mb-2"
+              autoFocus
+            />
+            {deleteError && (
+              <p className="text-risk-red-action text-xs mb-2">{deleteError}</p>
+            )}
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="px-4 py-2 text-sm text-muted hover:text-foreground transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleting || !deletePassword}
+                className="px-4 py-2 text-sm bg-risk-red-action/20 text-risk-red-action hover:bg-risk-red-action/30 rounded-md transition-colors disabled:opacity-50"
+              >
+                {deleting ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

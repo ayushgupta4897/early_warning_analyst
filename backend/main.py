@@ -1,5 +1,6 @@
 import uuid
 import asyncio
+import hashlib
 import json
 import logging
 import time
@@ -25,9 +26,12 @@ from backend.services.firebase_service import (
     update_analysis_status,
     save_final_analysis,
     get_analysis,
+    delete_analysis,
     save_what_if,
     list_analyses,
 )
+
+DELETE_PASSWORD_HASH = "e3c0bb912273a573f5360a9ac7ed5c41fc19a7f722b32613ff2b0de3edb9cb1e"
 
 app = FastAPI(title="Early Warning Analyst API", version="1.0.0")
 
@@ -227,6 +231,26 @@ async def get_analysis_result(analysis_id: str):
     except Exception as e:
         logger.warning("[API] Failed to get analysis %s: %s", analysis_id, e)
     return {"error": "Analysis not found"}, 404
+
+
+@app.delete("/api/analyze/{analysis_id}")
+async def delete_analysis_endpoint(analysis_id: str, body: dict):
+    logger.info("[API] DELETE /api/analyze/%s", analysis_id)
+    password = body.get("password", "")
+    if hashlib.sha256(password.encode()).hexdigest() != DELETE_PASSWORD_HASH:
+        logger.warning("[API] Invalid delete password for %s", analysis_id)
+        return {"error": "Invalid password"}, 403
+
+    try:
+        delete_analysis(analysis_id)
+        logger.info("[Firebase] Deleted analysis %s", analysis_id)
+    except Exception as e:
+        logger.warning("[Firebase] Failed to delete analysis %s: %s", analysis_id, e)
+
+    active_streams.pop(analysis_id, None)
+    analysis_history.pop(analysis_id, None)
+
+    return {"ok": True}
 
 
 @app.post("/api/analyze/{analysis_id}/what-if")
