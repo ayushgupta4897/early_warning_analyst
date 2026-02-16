@@ -82,7 +82,11 @@ export function useAnalysisStream(analysisId: string | null) {
             if (finalData) {
               const agentsData = finalData.agents as Record<string, unknown> | undefined;
               if (agentsData) {
-                const synth = agentsData.synthesis as SynthesisData | undefined;
+                const rawSynth = agentsData.synthesis;
+                // Handle case where synthesis is a list (extraction grabbed signals array only)
+                const synth: SynthesisData | undefined = Array.isArray(rawSynth)
+                  ? { scored_signals: rawSynth as Signal[], constellations: [], overall_assessment: {} as OverallAssessment }
+                  : (rawSynth as SynthesisData | undefined);
                 if (synth) {
                   if (synth.scored_signals) setSignals(synth.scored_signals);
                   if (synth.constellations) setConstellations(synth.constellations);

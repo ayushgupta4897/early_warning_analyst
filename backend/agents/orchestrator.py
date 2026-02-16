@@ -196,6 +196,11 @@ Remember: Category (c) fingerprint matches — where the current weak signal con
 
     synthesis_json = extract_json_from_response(synthesis_output)
 
+    # If extraction returned a list (e.g., just the signals array), wrap it
+    if isinstance(synthesis_json, list):
+        logger.warning("[Agent 4/4] SYNTHESIS — JSON extraction returned a list, wrapping as scored_signals")
+        synthesis_json = {"scored_signals": synthesis_json, "constellations": [], "overall_assessment": {}}
+
     # Apply scoring from code to ensure consistency
     if synthesis_json and "scored_signals" in synthesis_json:
         for signal in synthesis_json["scored_signals"]:

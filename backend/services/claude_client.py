@@ -78,8 +78,8 @@ def extract_json_from_response(text: str):
     except json.JSONDecodeError:
         pass
 
-    # Try to find any JSON array or object
-    for start_char, end_char in [("[", "]"), ("{", "}")]:
+    # Try to find any JSON object or array (prefer objects over arrays)
+    for start_char, end_char in [("{", "}"), ("[", "]")]:
         start = text.find(start_char)
         if start == -1:
             continue
