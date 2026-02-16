@@ -186,9 +186,16 @@ async def list_runs():
         for run in fb_runs:
             rid = run.get("id", "")
             if rid and rid not in merged:
-                config = run.get("config", {})
-                final_data = run.get("final_data", {})
-                synth = (final_data.get("agents", {}) or {}).get("synthesis", {}) if final_data else {}
+                config = run.get("config", {}) or {}
+                final_data = run.get("final_data", {}) or {}
+                if not isinstance(final_data, dict):
+                    final_data = {}
+                agents = final_data.get("agents", {}) or {}
+                if not isinstance(agents, dict):
+                    agents = {}
+                synth = agents.get("synthesis", {}) or {}
+                if not isinstance(synth, dict):
+                    synth = {}
                 assessment = synth.get("overall_assessment") if synth else None
                 created = run.get("created_at")
                 ts = created.timestamp() if hasattr(created, "timestamp") else time.time()
