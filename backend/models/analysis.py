@@ -40,5 +40,10 @@ class SignalScores(BaseModel):
     risk_band: RiskBand = RiskBand.GREEN
 
 
+class AnalysisRequest(BaseModel):
+    config: AnalysisConfig
+    password: str = ""
+
+
 class WhatIfRequest(BaseModel):
     scenario: str

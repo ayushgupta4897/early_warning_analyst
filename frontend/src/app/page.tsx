@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { startAnalysis, listRuns, AnalysisRun } from "@/lib/api";
@@ -45,6 +45,9 @@ export default function Home() {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [runs, setRuns] = useState<AnalysisRun[]>([]);
+  const [showRunModal, setShowRunModal] = useState(false);
+  const [runPassword, setRunPassword] = useState("");
+  const [runError, setRunError] = useState("");
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -97,9 +100,16 @@ export default function Home() {
     setShowDropdown(false);
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     if (!config.country) return;
+    setShowRunModal(true);
+    setRunPassword("");
+    setRunError("");
+  };
+
+  const handleRunConfirm = useCallback(async () => {
     setLoading(true);
+    setRunError("");
     try {
       const analysisConfig = {
         ...config,
@@ -108,13 +118,14 @@ export default function Home() {
           .map((s) => s.trim())
           .filter(Boolean),
       };
-      const { analysis_id } = await startAnalysis(analysisConfig);
+      const { analysis_id } = await startAnalysis(analysisConfig, runPassword);
+      setShowRunModal(false);
       router.push(`/analysis/${analysis_id}`);
     } catch (err) {
-      console.error("Failed to start analysis:", err);
+      setRunError(err instanceof Error ? err.message : "Failed to start analysis");
       setLoading(false);
     }
-  };
+  }, [config, customText, runPassword, router]);
 
   return (
     <div className="min-h-screen flex flex-col hero-glow">
@@ -504,6 +515,46 @@ export default function Home() {
             </div>
           </div>
         </>
+      )}
+
+      {/* Run Password Modal */}
+      {showRunModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => { setShowRunModal(false); setLoading(false); }} />
+          <div className="relative bg-card border border-card-border rounded-lg p-6 w-full max-w-sm shadow-xl">
+            <h3 className="text-foreground font-semibold text-lg mb-2">Authorize Run</h3>
+            <p className="text-muted text-sm mb-4">
+              Enter the password to start this analysis.
+            </p>
+            <input
+              type="password"
+              placeholder="Password"
+              value={runPassword}
+              onChange={(e) => { setRunPassword(e.target.value); setRunError(""); }}
+              onKeyDown={(e) => { if (e.key === "Enter" && runPassword && !loading) handleRunConfirm(); if (e.key === "Escape") { setShowRunModal(false); setLoading(false); } }}
+              className="w-full px-3 py-2 rounded-md bg-background border border-card-border text-foreground text-sm focus:outline-none focus:border-accent mb-2"
+              autoFocus
+            />
+            {runError && (
+              <p className="text-risk-red-action text-xs mb-2">{runError}</p>
+            )}
+            <div className="flex justify-end gap-2 mt-4">
+              <button
+                onClick={() => { setShowRunModal(false); setLoading(false); }}
+                className="px-4 py-2 text-sm text-muted hover:text-foreground transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleRunConfirm}
+                disabled={loading || !runPassword}
+                className="px-4 py-2 text-sm bg-accent/20 text-accent hover:bg-accent/30 rounded-md transition-colors disabled:opacity-50"
+              >
+                {loading ? "Starting..." : "Run"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

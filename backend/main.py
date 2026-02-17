@@ -19,7 +19,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger("ewa.api")
 
-from backend.models.analysis import AnalysisConfig, WhatIfRequest
+from backend.models.analysis import AnalysisConfig, AnalysisRequest, WhatIfRequest
 from backend.agents.orchestrator import run_analysis_pipeline, run_what_if
 from backend.services.firebase_service import (
     save_analysis,
@@ -31,7 +31,7 @@ from backend.services.firebase_service import (
     list_analyses,
 )
 
-DELETE_PASSWORD_HASH = "e3c0bb912273a573f5360a9ac7ed5c41fc19a7f722b32613ff2b0de3edb9cb1e"
+PASSWORD_HASH = "e3c0bb912273a573f5360a9ac7ed5c41fc19a7f722b32613ff2b0de3edb9cb1e"
 
 app = FastAPI(title="Early Warning Analyst API", version="1.0.0")
 
@@ -59,7 +59,12 @@ async def health():
 
 
 @app.post("/api/analyze")
-async def start_analysis(config: AnalysisConfig, background_tasks: BackgroundTasks):
+async def start_analysis(request: AnalysisRequest, background_tasks: BackgroundTasks):
+    if hashlib.sha256(request.password.encode()).hexdigest() != PASSWORD_HASH:
+        logger.warning("[API] Invalid run password")
+        return {"error": "Invalid password"}, 403
+
+    config = request.config
     analysis_id = str(uuid.uuid4())[:8]
     logger.info("[API] POST /api/analyze — id=%s, country=%s, scope=%s, horizon=%dy, signals=%d",
                 analysis_id, config.country, config.scope.value, config.horizon, config.signal_count)
@@ -237,7 +242,7 @@ async def get_analysis_result(analysis_id: str):
 async def delete_analysis_endpoint(analysis_id: str, body: dict):
     logger.info("[API] DELETE /api/analyze/%s", analysis_id)
     password = body.get("password", "")
-    if hashlib.sha256(password.encode()).hexdigest() != DELETE_PASSWORD_HASH:
+    if hashlib.sha256(password.encode()).hexdigest() != PASSWORD_HASH:
         logger.warning("[API] Invalid delete password for %s", analysis_id)
         return {"error": "Invalid password"}, 403
 
